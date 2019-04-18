@@ -161,6 +161,8 @@ module.exports = function(webpackEnv) {
       // changing JS code would still trigger a refresh.
     ].filter(Boolean),
     output: {
+      // GS - prevent `window` ref error
+      globalObject: 'this',
       // The build folder.
       path: isEnvProduction ? paths.appBuild : undefined,
       // Add /* filename */ comments to generated require()s in the output.
@@ -189,6 +191,8 @@ module.exports = function(webpackEnv) {
           (info => path.resolve(info.absoluteResourcePath).replace(/\\/g, '/')),
     },
     optimization: {
+      // GS -  prevent blocking and silent build error
+      noEmitOnErrors: false,
       minimize: isEnvProduction,
       minimizer: [
         // This is only used in production mode
@@ -337,6 +341,22 @@ module.exports = function(webpackEnv) {
           // match the requirements. When no loader matches it will fall
           // back to the "file" loader at the end of the loader list.
           oneOf: [
+            // GS - custom loaders
+            {
+              test: /\.worker\.js$/,
+              include: path.appSrc,
+              loader: require.resolve('worker-loader')
+            },
+            {
+              test: /\.sharedworker\.js$/,
+              include: path.appSrc,
+              loader: require.resolve('sharedworker-loader')
+            },
+            {
+              test: /\.(graphql|gql)$/,
+              include: path.appSrc,
+              loader: require.resolve('graphql-tag/loader'),
+            },
             // "url" loader works like "file" loader except that it embeds assets
             // smaller than specified limit in bytes as data URLs to avoid requests.
             // A missing `test` is equivalent to a match.
